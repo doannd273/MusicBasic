@@ -1,0 +1,11 @@
+{
+  "java.jdt.ls.java.home": "/Users/doannd3/Library/Java/JavaVirtualMachines/corretto-21.0.6/Contents/Home",
+  "java.import.gradle.java.home": "/Users/doannd3/Library/Java/JavaVirtualMachines/corretto-21.0.6/Contents/Home",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "/Users/doannd3/Library/Java/JavaVirtualMachines/corretto-21.0.6/Contents/Home",
+      "default": true
+    }
+  ]
+}

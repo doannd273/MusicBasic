@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">MusicBasic</string>
+    <string name="track_title_ophelia">Ophelia</string>
+    <string name="track_artist_steven_price">Steven Price</string>
+    <string name="track_elapsed_time">1:25</string>
+    <string name="track_total_time">3:15</string>
+    <string name="content_description_album_art">Ophelia album artwork</string>
+    <string name="content_description_shuffle">Shuffle</string>
+    <string name="content_description_previous">Previous track</string>
+    <string name="content_description_pause">Pause</string>
+    <string name="content_description_resume">Resume</string>
+    <string name="content_description_next">Next track</string>
+    <string name="content_description_repeat">Repeat</string>
+    <string name="content_description_music">Music</string>
+</resources>
