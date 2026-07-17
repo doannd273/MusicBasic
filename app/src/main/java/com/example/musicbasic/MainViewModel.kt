@@ -1,9 +1,6 @@
 package com.example.musicbasic
 
-import android.content.ContentResolver
 import android.content.Context
-import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
@@ -11,6 +8,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.musicbasic.extensions.toAndroidResourceUri
+import com.example.musicbasic.repository.MusicRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
@@ -24,19 +23,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
+import kotlin.math.roundToLong
+import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext
+    private val context: Context,
+    private val musicRepository: MusicRepository,
     private val exoPlayer: ExoPlayer,
 ) : ViewModel() {
-
-    private val musicList = listOf(
-        R.raw.mot_ngay_nao_do,
-        R.raw.tam_su,
-        R.raw.vuon_may_vua_hay,
-    )
 
     private val _uiState = MutableStateFlow(MainState())
     val uiState: StateFlow<MainState> = _uiState.asStateFlow()
@@ -45,31 +43,68 @@ class MainViewModel @Inject constructor(
     val effect: SharedFlow<MainEffect> = _effect.asSharedFlow()
 
     private var progressJob: Job? = null
+    private val musicList = musicRepository.getMusics()
 
     private val playerListener = object : Player.Listener {
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            updateCurrentTransaction()
+        }
+
         override fun onPlaybackStateChanged(playbackState: Int) {
             when (playbackState) {
-                Player.STATE_READY -> updatePlaybackPosition()
-                Player.STATE_ENDED -> {
-                    updatePlaybackPosition()
-                    stopProgressUpdates()
-                    _uiState.update { it.copy(isPause = true) }
-                }
+                Player.STATE_READY,
+                Player.STATE_ENDED,
+                    -> updatePlaybackProgress()
+
+                else -> Unit
             }
         }
 
-        override fun onPlayerError(error: PlaybackException) {
-            Log.e(TAG, "ExoPlayer error", error)
-        }
-
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            _uiState.update { it.copy(isPause = !isPlaying) }
+            _uiState.update { currentState ->
+                currentState.copy(isPlaying = isPlaying)
+            }
+
             if (isPlaying) {
                 startProgressUpdates()
             } else {
                 stopProgressUpdates()
-                updatePlaybackPosition()
+                updatePlaybackProgress()
             }
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            stopProgressUpdates()
+
+            _uiState.update { currentState ->
+                currentState.copy(isPlaying = false)
+            }
+
+            Timber.e(error, "Playback error")
+        }
+    }
+
+    private fun updateCurrentTransaction() {
+        val currentMusicIndex = exoPlayer.currentMediaItemIndex
+        val currentMusic = musicRepository.getMusics().getOrNull(
+            currentMusicIndex
+        ) ?: return
+
+        _uiState.update {
+            it.copy(
+                currentMusic = currentMusic.copy(
+                    id = currentMusic.id,
+                    title = currentMusic.title,
+                    author = currentMusic.author,
+                    thumbnail = currentMusic.thumbnail,
+                    musicResId = currentMusic.musicResId
+                ),
+                currentMusicIndex = currentMusicIndex,
+                progress = 0f,
+                currentPositionMs = 0L,
+                durationMs = 0L,
+            )
         }
     }
 
@@ -78,8 +113,8 @@ class MainViewModel @Inject constructor(
 
         progressJob = viewModelScope.launch {
             while (isActive) {
-                updatePlaybackPosition()
-                delay(500)
+                updatePlaybackProgress()
+                delay(500.milliseconds)
             }
         }
     }
@@ -89,89 +124,194 @@ class MainViewModel @Inject constructor(
         progressJob = null
     }
 
-    private fun updatePlaybackPosition() {
-        val currentMs = exoPlayer.currentPosition.coerceAtLeast(0L)
-        val durationMs = exoPlayer.duration
-        val hasDuration = durationMs != C.TIME_UNSET && durationMs > 0L
+    private fun updatePlaybackProgress() {
+        val currentPositionMs =
+            exoPlayer.currentPosition.coerceAtLeast(0L)
+
+        val playerDurationMs = exoPlayer.duration
+
+        val hasValidDuration =
+            playerDurationMs != C.TIME_UNSET &&
+                    playerDurationMs > 0L
 
         _uiState.update { currentState ->
+            val durationMs = if (hasValidDuration) {
+                playerDurationMs
+            } else {
+                currentState.durationMs
+            }
+
+            val progress = if (hasValidDuration) {
+                calculateProgress(
+                    currentPositionMs = currentPositionMs,
+                    durationMs = playerDurationMs,
+                )
+            } else {
+                currentState.progress
+            }
+
             currentState.copy(
-                startTime = currentMs / 1000,
-                endTime = if (hasDuration) durationMs / 1000 else currentState.endTime,
-                progress = if (hasDuration) {
-                    (currentMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
-                } else {
-                    currentState.progress
-                },
+                currentPositionMs = currentPositionMs,
+                durationMs = durationMs,
+                progress = progress,
             )
         }
+    }
+
+    private fun calculateProgress(
+        currentPositionMs: Long,
+        durationMs: Long,
+    ): Float {
+        return (currentPositionMs.toFloat() / durationMs.toFloat())
+            .coerceIn(0f, 1f)
     }
 
     init {
         exoPlayer.addListener(playerListener)
-        playRandomMusic()
+        initPlaylist()
+        playMusicAt(index = 0)
     }
 
-    private fun playRandomMusic() {
-        initPlay(musicList.random())
-    }
+    private fun initPlaylist() {
+        if (musicList.isEmpty()) {
+            return
+        }
 
-    private fun initPlay(musicId: Int) {
-        val uri = Uri.Builder()
-            .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-            .authority(context.packageName)
-            .appendPath(musicId.toString())
-            .build()
-        val mediaItem = MediaItem.fromUri(uri)
-
-        _uiState.update {
-            it.copy(
-                isPause = false,
-                progress = 0f,
-                startTime = 0L,
-                endTime = 0L,
-            )
+        val mediaItems = musicList.map { music ->
+            val uri = context.toAndroidResourceUri(resourceId = music.musicResId)
+            MediaItem.fromUri(uri)
         }
 
         exoPlayer.apply {
-            setMediaItem(mediaItem)
+            setMediaItems(mediaItems)
             prepare()
-            play()
         }
+    }
 
-        viewModelScope.launch {
-            _effect.emit(MainEffect.PlayMusicSuccess)
-        }
+    private fun playMusicAt(index : Int) {
+        if (index !in musicList.indices) return
+
+        exoPlayer.seekTo(
+            index,
+            C.TIME_UNSET
+        )
+
+        exoPlayer.play()
     }
 
     fun onEvent(event: MainEvent) {
         when (event) {
-            MainEvent.ShuffleClicked -> Unit
-            MainEvent.PreviousClicked -> {
+            MainEvent.ShuffleClicked -> {
+                doShuffle()
+            }
 
+            MainEvent.PreviousClicked -> {
+                actionPrevious()
             }
+
             MainEvent.PlayPauseClicked -> {
-                val shouldResume = _uiState.value.isPause
-                if (shouldResume) {
-                    exoPlayer.play()
-                } else {
-                    exoPlayer.pause()
-                }
-                _uiState.value = _uiState.value.copy(isPause = !shouldResume)
+                togglePlayback()
             }
-            MainEvent.NextClicked -> Unit
-            MainEvent.RepeatClicked -> Unit
+
+            MainEvent.NextClicked -> {
+                actionNext()
+            }
+
+            MainEvent.RepeatClicked -> {
+                doRepeat()
+            }
+
+            is MainEvent.SeekChanged -> {
+                seekToProgress(progress = event.progress)
+            }
+        }
+    }
+
+    private fun seekToProgress(
+        progress: Float
+    ) {
+        val durationMs = exoPlayer.duration
+
+        val hasValidDuration =
+            durationMs != C.TIME_UNSET &&
+                    durationMs > 0L
+
+        if (!hasValidDuration) return
+
+        val normalizedProgress =
+            progress.coerceIn(0f, 1f)
+
+        val targetPositionMs =
+            (durationMs.toDouble() * normalizedProgress)
+                .roundToLong()
+                .coerceIn(0L, durationMs)
+
+        exoPlayer.seekTo(targetPositionMs)
+        exoPlayer.play()
+
+        _uiState.update { currentState ->
+            currentState.copy(
+                currentPositionMs = targetPositionMs,
+                progress = normalizedProgress,
+            )
+        }
+    }
+
+    private fun doShuffle() {
+
+    }
+
+    private fun doRepeat() {
+
+    }
+
+    private fun actionPrevious() {
+        if (!exoPlayer.hasPreviousMediaItem()) {
+            exoPlayer.seekTo(0L)
+            viewModelScope.launch {
+                _effect.emit(
+                    MainEffect.MusicMessage(message = "Not Privious")
+                )
+            }
+            return
+        }
+        exoPlayer.seekToPreviousMediaItem()
+        exoPlayer.play()
+    }
+
+    private fun actionNext() {
+        if (!exoPlayer.hasNextMediaItem()) {
+            viewModelScope.launch {
+                _effect.emit(
+                    MainEffect.MusicMessage(message = "Not Next")
+                )
+            }
+            return
+        }
+        exoPlayer.seekToNextMediaItem()
+        exoPlayer.play()
+    }
+
+    private fun togglePlayback() {
+        val isPlaying = _uiState.value.isPlaying
+        if (isPlaying) {
+            exoPlayer.pause()
+        } else {
+            exoPlayer.play()
+        }
+        _uiState.update {
+            it.copy(isPlaying = !isPlaying)
         }
     }
 
     override fun onCleared() {
-        stopProgressUpdates()
-        exoPlayer.removeListener(playerListener)
-        exoPlayer.release()
+        release()
         super.onCleared()
     }
 
-    private companion object {
-        const val TAG = "MainViewModel"
+    private fun release() {
+        stopProgressUpdates()
+        exoPlayer.removeListener(playerListener)
+        exoPlayer.release()
     }
 }

@@ -7,5 +7,6 @@
       "path": "/Users/doannd3/Library/Java/JavaVirtualMachines/corretto-21.0.6/Contents/Home",
       "default": true
     }
-  ]
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic"
 }
