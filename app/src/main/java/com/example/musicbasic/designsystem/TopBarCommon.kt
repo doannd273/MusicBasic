@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomeTopBar(
@@ -41,7 +42,7 @@ fun HomeTopBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(50.dp),
                 onClick = {
                     onIconLeftClick()
                 },
@@ -49,7 +50,7 @@ fun HomeTopBar(
                 Icon(
                     painter = painterResource(id = topBarIconLeft),
                     contentDescription = "",
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(30.dp),
                     tint = Color.White,
                 )
             }
@@ -57,7 +58,9 @@ fun HomeTopBar(
             Text(
                 modifier = Modifier.weight(1f),
                 text = stringResource(id = topBarLabel),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 18.sp
+                ),
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )

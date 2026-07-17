@@ -7,8 +7,16 @@ data class ListState(
 )
 
 sealed class ListEvent {
-    data class MusicClick(
-        val music: Music,
+    data class DownloadMusic(
+        val id: Int,
+    ) : ListEvent()
+
+    data class ShareMusic(
+        val id: Int,
+    ) : ListEvent()
+
+    data class ToggleLikeMusic(
+        val id: Int,
     ) : ListEvent()
 }
 
