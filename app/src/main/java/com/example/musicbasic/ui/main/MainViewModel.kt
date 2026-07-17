@@ -1,4 +1,4 @@
-package com.example.musicbasic
+package com.example.musicbasic.ui.main
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -9,6 +9,8 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.musicbasic.extensions.toAndroidResourceUri
+import com.example.musicbasic.extensions.toRepeatMode
+import com.example.musicbasic.model.RepeatMode
 import com.example.musicbasic.repository.MusicRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -48,14 +50,28 @@ class MainViewModel @Inject constructor(
     private val playerListener = object : Player.Listener {
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            updateCurrentTransaction()
+            updateCurrentMusic()
+        }
+
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            _uiState.update {
+                it.copy(
+                    repeatMode = repeatMode.toRepeatMode(),
+                )
+            }
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             when (playbackState) {
-                Player.STATE_READY,
-                Player.STATE_ENDED,
-                    -> updatePlaybackProgress()
+                Player.STATE_READY -> {
+                    updatePlaybackProgress()
+                }
+                Player.STATE_ENDED -> {
+                    updatePlaybackProgress()
+                    _uiState.update {
+                        it.copy(isPlaying = false)
+                    }
+                }
 
                 else -> Unit
             }
@@ -85,27 +101,25 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun updateCurrentTransaction() {
+    private fun updateCurrentMusic() {
         val currentMusicIndex = exoPlayer.currentMediaItemIndex
-        val currentMusic = musicRepository.getMusics().getOrNull(
+        val currentMusic = musicList.getOrNull(
             currentMusicIndex
         ) ?: return
 
         _uiState.update {
             it.copy(
-                currentMusic = currentMusic.copy(
-                    id = currentMusic.id,
-                    title = currentMusic.title,
-                    author = currentMusic.author,
-                    thumbnail = currentMusic.thumbnail,
-                    musicResId = currentMusic.musicResId
-                ),
+                currentMusic = currentMusic,
                 currentMusicIndex = currentMusicIndex,
                 progress = 0f,
                 currentPositionMs = 0L,
                 durationMs = 0L,
             )
         }
+    }
+
+    private fun resetRepeatMode() {
+        exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
     }
 
     private fun startProgressUpdates() {
@@ -202,7 +216,7 @@ class MainViewModel @Inject constructor(
     fun onEvent(event: MainEvent) {
         when (event) {
             MainEvent.ShuffleClicked -> {
-                doShuffle()
+                actionShuffle()
             }
 
             MainEvent.PreviousClicked -> {
@@ -218,7 +232,7 @@ class MainViewModel @Inject constructor(
             }
 
             MainEvent.RepeatClicked -> {
-                doRepeat()
+                actionRepeat()
             }
 
             is MainEvent.SeekChanged -> {
@@ -257,12 +271,33 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun doShuffle() {
+    private fun actionShuffle() {
+        val newShuffleMode = !exoPlayer.shuffleModeEnabled
 
+        exoPlayer.shuffleModeEnabled = newShuffleMode
+
+        _uiState.update {
+            it.copy(
+                isShuffleEnabled = newShuffleMode,
+            )
+        }
     }
 
-    private fun doRepeat() {
+    private fun actionRepeat() {
+        val newPlayerRepeatMode = when (exoPlayer.repeatMode) {
+            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+            Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_OFF
+            else -> Player.REPEAT_MODE_OFF
+        }
 
+        exoPlayer.repeatMode = newPlayerRepeatMode
+
+        _uiState.update {
+            it.copy(
+                repeatMode = newPlayerRepeatMode.toRepeatMode(),
+            )
+        }
     }
 
     private fun actionPrevious() {

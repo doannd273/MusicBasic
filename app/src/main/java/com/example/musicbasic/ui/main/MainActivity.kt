@@ -1,4 +1,4 @@
-package com.example.musicbasic
+package com.example.musicbasic.ui.main
 
 import android.os.Bundle
 import android.widget.Toast
@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter.Companion.tint
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -58,6 +59,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.musicbasic.R
+import com.example.musicbasic.extensions.repeatIcon
+import com.example.musicbasic.extensions.repeatTint
 import com.example.musicbasic.extensions.timeText
 import com.example.musicbasic.model.Music
 import com.example.musicbasic.ui.theme.MusicBasicTheme
@@ -249,7 +253,11 @@ fun MainScreen(
                     painter = painterResource(id = R.drawable.ic_shuffle),
                     contentDescription = stringResource(R.string.content_description_shuffle),
                     modifier = Modifier.size(PlayerControlIconSize),
-                    tint = PlayerPrimaryText,
+                    tint = if (mainState.isShuffleEnabled) {
+                        PlayerAccentPurpleLight
+                    } else {
+                        PlayerPrimaryText
+                    },
                 )
             }
 
@@ -308,10 +316,10 @@ fun MainScreen(
                 },
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_repeat),
+                    painter = painterResource(id = mainState.repeatMode.repeatIcon()),
                     contentDescription = stringResource(R.string.content_description_repeat),
                     modifier = Modifier.size(PlayerControlIconSize),
-                    tint = PlayerPrimaryText,
+                    tint = mainState.repeatMode.repeatTint(),
                 )
             }
         }
