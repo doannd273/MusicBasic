@@ -12,4 +12,5 @@
     <string name="content_description_next">Next track</string>
     <string name="content_description_repeat">Repeat</string>
     <string name="content_description_music">Music</string>
+    <string name="notification_permission_denied">Notification permission denied</string>
 </resources>

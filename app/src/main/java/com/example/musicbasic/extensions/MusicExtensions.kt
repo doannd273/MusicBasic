@@ -3,11 +3,13 @@ package com.example.musicbasic.extensions
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
-import androidx.compose.runtime.Composable
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.ui.compose.material3.Player
 import com.example.musicbasic.R
+import com.example.musicbasic.model.Music
 import com.example.musicbasic.model.RepeatMode
 import com.example.musicbasic.ui.theme.PlayerAccentPurpleLight
 import com.example.musicbasic.ui.theme.PlayerPrimaryText
@@ -47,4 +49,35 @@ fun Int.toRepeatMode(): RepeatMode {
         Player.REPEAT_MODE_ONE -> RepeatMode.ONE
         else -> RepeatMode.OFF
     }
+}
+
+fun Context.createDrawableUri(
+    @DrawableRes drawableResId: Int,
+): Uri {
+    return Uri.Builder()
+        .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+        .authority(resources.getResourcePackageName(drawableResId))
+        .appendPath(resources.getResourceTypeName(drawableResId))
+        .appendPath(resources.getResourceEntryName(drawableResId))
+        .build()
+}
+
+fun Music.toMediaItem(
+    context: Context,
+): MediaItem {
+    val musicUri = context.toAndroidResourceUri(
+        resourceId = musicResId,
+    )
+
+    return MediaItem.Builder()
+        .setMediaId(id.toString())
+        .setUri(musicUri)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(title)
+                .setArtist(author)
+                .setArtworkUri(context.createDrawableUri(thumbnail))
+                .build()
+        )
+        .build()
 }

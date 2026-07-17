@@ -7,6 +7,6 @@ data class Music(
     val id: Int,
     val title: String,
     val author: String,
-    @DrawableRes val thumbnail: Int,
-    @RawRes val musicResId: Int,
+    @param:DrawableRes val thumbnail: Int,
+    @param:RawRes val musicResId: Int,
 )
