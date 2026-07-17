@@ -6,20 +6,17 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ServiceComponent
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.components.ViewModelComponent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ServiceScoped
 import dagger.hilt.android.scopes.ViewModelScoped
 
 @Module
 @InstallIn(ServiceComponent::class)
 object PlayerModule {
-
     @Provides
     @ServiceScoped
     fun providePlayer(
-        @ApplicationContext context: Context
-    ): ExoPlayer {
-        return ExoPlayer.Builder(context).build()
-    }
+        @ApplicationContext context: Context,
+    ): ExoPlayer = ExoPlayer.Builder(context).build()
 }

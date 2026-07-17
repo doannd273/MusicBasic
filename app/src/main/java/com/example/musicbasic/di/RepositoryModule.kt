@@ -11,10 +11,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 interface RepositoryModule {
-
     @Binds
     @Singleton
-    fun bindMusicRepository(
-        impl: MusicRepositoryImpl,
-    ): MusicRepository
+    fun bindMusicRepository(impl: MusicRepositoryImpl): MusicRepository
 }

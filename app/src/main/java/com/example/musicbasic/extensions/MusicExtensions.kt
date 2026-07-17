@@ -21,63 +21,74 @@ fun Long.timeText(): String {
     return "$minutes:${seconds.toString().padStart(2, '0')}"
 }
 
-fun Context.toAndroidResourceUri(resourceId: Int): Uri {
-    return Uri.Builder()
+fun Context.toAndroidResourceUri(resourceId: Int): Uri =
+    Uri
+        .Builder()
         .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
         .authority(packageName)
         .appendPath(resourceId.toString())
         .build()
-}
 
-fun RepeatMode.repeatIcon(): Int {
-    return when (this) {
+fun RepeatMode.repeatIcon(): Int =
+    when (this) {
         RepeatMode.ALL, RepeatMode.OFF -> R.drawable.ic_repeat
         RepeatMode.ONE -> R.drawable.ic_repeat_one
     }
-}
 
-fun RepeatMode.repeatTint(): Color {
-    return when (this) {
+fun RepeatMode.repeatTint(): Color =
+    when (this) {
         RepeatMode.OFF -> PlayerPrimaryText
         RepeatMode.ALL, RepeatMode.ONE -> PlayerAccentPurpleLight
     }
-}
 
-fun Int.toRepeatMode(): RepeatMode {
-    return when (this) {
+fun Int.toRepeatMode(): RepeatMode =
+    when (this) {
         Player.REPEAT_MODE_ALL -> RepeatMode.ALL
         Player.REPEAT_MODE_ONE -> RepeatMode.ONE
         else -> RepeatMode.OFF
     }
-}
+
+fun Boolean.playPauseIcon(): Int =
+    if (this) {
+        R.drawable.ic_pause
+    } else {
+        R.drawable.ic_resume
+    }
+
+fun Boolean.playPauseDescription(): Int =
+    if (this) {
+        R.string.content_description_pause
+    } else {
+        R.string.content_description_resume
+    }
 
 fun Context.createDrawableUri(
     @DrawableRes drawableResId: Int,
-): Uri {
-    return Uri.Builder()
+): Uri =
+    Uri
+        .Builder()
         .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
         .authority(resources.getResourcePackageName(drawableResId))
         .appendPath(resources.getResourceTypeName(drawableResId))
         .appendPath(resources.getResourceEntryName(drawableResId))
         .build()
-}
 
-fun Music.toMediaItem(
-    context: Context,
-): MediaItem {
-    val musicUri = context.toAndroidResourceUri(
-        resourceId = musicResId,
-    )
+fun Music.toMediaItem(context: Context): MediaItem {
+    val musicUri =
+        context.toAndroidResourceUri(
+            resourceId = musicResId,
+        )
 
-    return MediaItem.Builder()
+    return MediaItem
+        .Builder()
         .setMediaId(id.toString())
         .setUri(musicUri)
         .setMediaMetadata(
-            MediaMetadata.Builder()
+            MediaMetadata
+                .Builder()
                 .setTitle(title)
                 .setArtist(author)
                 .setArtworkUri(context.createDrawableUri(thumbnail))
-                .build()
-        )
-        .build()
+                .build(),
+        ).build()
 }

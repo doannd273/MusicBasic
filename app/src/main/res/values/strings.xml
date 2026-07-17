@@ -5,6 +5,10 @@
     <string name="track_elapsed_time">1:25</string>
     <string name="track_total_time">3:15</string>
     <string name="content_description_album_art">Ophelia album artwork</string>
+    <string name="list_title">List</string>
+    <string name="content_description_back">Back</string>
+    <string name="content_description_play">Play</string>
+    <string name="content_description_more_options">More options</string>
     <string name="content_description_shuffle">Shuffle</string>
     <string name="content_description_previous">Previous track</string>
     <string name="content_description_pause">Pause</string>
@@ -13,4 +17,5 @@
     <string name="content_description_repeat">Repeat</string>
     <string name="content_description_music">Music</string>
     <string name="notification_permission_denied">Notification permission denied</string>
+    <string name="home_title">Home</string>
 </resources>

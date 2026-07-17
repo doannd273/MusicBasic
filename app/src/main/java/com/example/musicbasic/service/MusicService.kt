@@ -11,7 +11,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MusicService : MediaSessionService() {
-
     @Inject
     lateinit var exoPlayer: ExoPlayer
 
@@ -20,15 +19,15 @@ class MusicService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
 
-        mediaSession = MediaSession.Builder(
-            this,
-            exoPlayer
-        ).build()
+        mediaSession =
+            MediaSession
+                .Builder(
+                    this,
+                    exoPlayer,
+                ).build()
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
-        return mediaSession
-    }
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     override fun onDestroy() {
         mediaSession?.release()
