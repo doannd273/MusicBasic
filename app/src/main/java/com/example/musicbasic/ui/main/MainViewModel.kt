@@ -10,7 +10,6 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.musicbasic.extensions.toAndroidResourceUri
 import com.example.musicbasic.extensions.toRepeatMode
-import com.example.musicbasic.model.RepeatMode
 import com.example.musicbasic.repository.MusicRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -118,10 +117,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun resetRepeatMode() {
-        exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
-    }
-
     private fun startProgressUpdates() {
         if (progressJob?.isActive == true) return
 
@@ -183,7 +178,7 @@ class MainViewModel @Inject constructor(
     init {
         exoPlayer.addListener(playerListener)
         initPlaylist()
-        playMusicAt(index = 0)
+        playMusicAt()
     }
 
     private fun initPlaylist() {
@@ -202,7 +197,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun playMusicAt(index : Int) {
+    private fun playMusicAt(index : Int = 0) {
         if (index !in musicList.indices) return
 
         exoPlayer.seekTo(
