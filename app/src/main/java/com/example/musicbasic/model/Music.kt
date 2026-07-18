@@ -10,4 +10,5 @@ data class Music(
     @param:DrawableRes val thumbnail: Int,
     @param:RawRes val musicResId: Int,
     val isLike: Boolean = false,
+    val url: String = ""
 )

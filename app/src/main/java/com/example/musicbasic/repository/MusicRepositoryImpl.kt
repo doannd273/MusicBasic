@@ -15,6 +15,7 @@ class MusicRepositoryImpl
                     author = "Hoàng Dũng, Đen, Bạn Nhạc",
                     musicResId = R.raw.mot_ngay_nao_do,
                     thumbnail = R.drawable.ic_background,
+                    url = "https://samplelib.com/mp3/sample-speech-10m.mp3",
                 ),
                 Music(
                     id = 2,
@@ -22,6 +23,7 @@ class MusicRepositoryImpl
                     author = "Solmee, Dyteller, hoangkiet",
                     musicResId = R.raw.tam_su,
                     thumbnail = R.drawable.ic_background_2,
+                    url = "https://samplelib.com/mp3/sample-speech-20m.mp3",
                 ),
                 Music(
                     id = 3,
@@ -29,6 +31,7 @@ class MusicRepositoryImpl
                     author = "Ân ngờ, MYLINA",
                     musicResId = R.raw.vuon_may_vua_hay,
                     thumbnail = R.drawable.ic_background_3,
+                    url = "https://samplelib.com/mp3/sample-speech-30m.mp3",
                 ),
             )
     }
